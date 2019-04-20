@@ -1,6 +1,6 @@
 ﻿namespace Sleepingmat
 {
-    public class Token
+    internal class Token
     {
         public ETokenType Type;
         public object Value;
