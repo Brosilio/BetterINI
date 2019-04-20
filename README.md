@@ -43,5 +43,16 @@ Inside a block, you can put as many key/value pairs as you need.
 
 don't even THINK about putting a block inside a block. that is `not allowed`.
 
+# Using the library
+The library is easy to use.
+Create a new `Sleepingmat` class, and pass some valid Sleepingmat to it via the Parse() function.
+
+```csharp
+Sleepingmat mat = new Sleepingmat();
+mat.Parse(File.ReadAllText("sleeping.mat"));
+```
+
+The rest is quite self-explanatory.
+
 ## License
 BSD 3 santa claus
