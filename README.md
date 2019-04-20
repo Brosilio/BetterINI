@@ -9,7 +9,7 @@ Key:value pairs can be put inside blocks or left on their own.
 
 If there are duplicate keys, the last
 
-```json
+```conf
 Setting: "value";
 
 blockname
