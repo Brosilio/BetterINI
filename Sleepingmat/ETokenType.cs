@@ -1,6 +1,6 @@
 ﻿namespace Sleepingmat
 {
-    public enum ETokenType
+    internal enum ETokenType
     {
         Identifier, StringLiteral, NumberLiteral,
         LParen, RParen,

@@ -43,9 +43,9 @@
   <ItemGroup>
     <Compile Include="ETokenType.cs" />
     <Compile Include="Lexer.cs" />
-    <Compile Include="Parser.cs" />
+    <Compile Include="Sleepingmat.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SettingObject.cs" />
+    <Compile Include="Block.cs" />
     <Compile Include="Token.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

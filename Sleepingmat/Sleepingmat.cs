@@ -6,17 +6,27 @@ using System.Threading.Tasks;
 
 namespace Sleepingmat
 {
-    public class Parser
+    public class Sleepingmat
     {
         private Token[] tokens;
         private Lexer lex;
-
         private int pos = -1;
 
+        /// <summary>
+        /// All the key/value pairs not inside a block.
+        /// </summary>
         public Dictionary<string, string> settings = new Dictionary<string, string>();
 
-        public List<SettingObject> settingObjects = new List<SettingObject>();
+        /// <summary>
+        /// All the blocks.
+        /// </summary>
+        public List<Block> blocks = new List<Block>();
 
+        /// <summary>
+        /// Parses some text formatted as a sleepingmat file. This does not take a file path.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
         public Exception Parse(string input)
         {
             lex = new Lexer(input);
@@ -25,9 +35,118 @@ namespace Sleepingmat
             return Build();
         }
 
+        /// <summary>
+        /// Sets a setting.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <param name="value">The value. ToString() is used to convert.</param>
+        public void SetValue(string key, object value)
+        {
+            if (settings.ContainsKey(key))
+                settings[key] = value.ToString();
+            else
+                settings.Add(key, value.ToString());
+        }
+
+        /// <summary>
+        /// Gets a setting. Returns false if it didn't exist.
+        /// </summary>
+        /// <param name="key">The key</param>
+        /// <param name="value">The returned value</param>
+        /// <returns></returns>
+        public bool GetValue(string key, out string value)
+        {
+            if(settings.ContainsKey(key))
+            {
+                value = settings[key];
+                return true;
+            }
+
+            value = string.Empty;
+            return false;
+        }
+
+        /// <summary>
+        /// Since an infinite number of blocks can have the same identifier, this returns all blocks with the same identifier. Use GetFirstBlock() if you only want one.
+        /// </summary>
+        /// <param name="name">Name of the blocks</param>
+        /// <param name="blocks">The blocks found</param>
+        /// <returns>Returns true if any blocks by the name were found</returns>
+        public bool GetBlocks(string name, out Block[] blocks)
+        {
+            List<Block> temp = new List<Block>();
+            foreach (Block b in this.blocks)
+                if (b.name == name)
+                    temp.Add(b);
+            if (temp.Count > 0)
+            {
+                blocks = temp.ToArray();
+                return true;
+            }
+            else
+            {
+                blocks = null;
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Returns the first instance of a block with a specified name.
+        /// </summary>
+        /// <param name="name">The name</param>
+        /// <param name="block">The block found, or null if none</param>
+        /// <returns>Returns true if a block was found</returns>
+        public bool GetBlock(string name, out Block block)
+        {
+            foreach(Block b in blocks)
+            {
+                if(b.name == name)
+                {
+                    block = b;
+                    return true;
+                }
+            }
+
+            block = null;
+            return false;
+        }
+
+        /// <summary>
+        /// "captures" this instance with modifications as a string.
+        /// </summary>
+        /// <returns>This configuration as a valid string ready to be saved to be disk.</returns>
+        public string Capture()
+        {
+            return ToString();
+        }
+
+        /// <summary>
+        /// Literally does the same thing as capture but sometimes people are retarded and don't check ToString() overrides.
+        /// </summary>
+        /// <returns>see Capture()</returns>
+        public override string ToString()
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach(string key in settings.Keys)
+            {
+                sb.AppendLine(string.Format("{0}: {1};", key, settings[key]));
+            }
+            foreach(Block so in blocks)
+            {
+                sb.AppendLine(so.name);
+                sb.AppendLine("{");
+                foreach(string key in so.settings.Keys)
+                {
+                    sb.AppendLine(string.Format("{0}: {1};", key, so.settings[key]));
+                }
+                sb.AppendLine("}");
+            }
+            return sb.ToString();
+        }
+
         private Exception Build()
         {
-            SettingObject current = null;
+            Block current = null;
             while(!IsEnd())
             {
                 Token t = Advance();
@@ -73,7 +192,7 @@ namespace Sleepingmat
                                 {
                                     if (current == null)
                                     {
-                                        current = new SettingObject();
+                                        current = new Block();
                                         current.name = t.Value.ToString();
                                     }
 
@@ -95,14 +214,14 @@ namespace Sleepingmat
                     else if(NextIs(ETokenType.RBrace))
                     {
                         Advance();
-                        settingObjects.Add(current);
+                        blocks.Add(current);
                         current = null;
                     }
                 }
                 else if (t.Type == ETokenType.RBrace)
                 {
                     Advance();
-                    settingObjects.Add(current);
+                    blocks.Add(current);
                     current = null;
                 }
                 else

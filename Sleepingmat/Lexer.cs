@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Sleepingmat
 {
-    public class Lexer
+    internal class Lexer
     {
-        public string InputString { get; private set; }
+        private string inputString;
         private int _currentCharPosition = 0;
         private int _start = 0;
         private List<Token> _tks = new List<Token>();
@@ -17,7 +17,7 @@ namespace Sleepingmat
 
         public Lexer(string code)
         {
-            InputString = code;
+            inputString = code;
         }
 
         public List<Token> GetAllTokens()
@@ -66,13 +66,13 @@ namespace Sleepingmat
         {
             _currentCharPosition++;
             _char++;
-            return InputString[_currentCharPosition - 1];
+            return inputString[_currentCharPosition - 1];
         }
 
         private char GetCurrentChar()
         {
             if (!IsEnd())
-                return InputString[_currentCharPosition];
+                return inputString[_currentCharPosition];
             else
                 return '\0';
         }
@@ -80,7 +80,7 @@ namespace Sleepingmat
         private char GetNextChar()
         {
             if (!IsEnd())
-                return InputString[_currentCharPosition + 1];
+                return inputString[_currentCharPosition + 1];
             else
                 return '\0';
         }
@@ -107,7 +107,7 @@ namespace Sleepingmat
                 while (char.IsDigit(GetCurrentChar()))
                     Advance();
             }
-            string s = InputString.Substring(_start, _currentCharPosition - _start).Replace(".", ",");
+            string s = inputString.Substring(_start, _currentCharPosition - _start).Replace(".", ",");
             if (!f)
                 _tks.Add(new Token(ETokenType.NumberLiteral, int.Parse(s), _line, _char));
         }
@@ -117,7 +117,7 @@ namespace Sleepingmat
             while (GetCurrentChar() != '"' && !IsEnd())
                 Advance();
             Advance();
-            _tks.Add(new Token(ETokenType.StringLiteral, InputString.Substring(_start + 1, _currentCharPosition - (_start + 2)), _line, _char));
+            _tks.Add(new Token(ETokenType.StringLiteral, inputString.Substring(_start + 1, _currentCharPosition - (_start + 2)), _line, _char));
         }
 
         private void GetIdentifier()
@@ -125,13 +125,13 @@ namespace Sleepingmat
             while (IsAlphaNumeric(GetCurrentChar()))
                 Advance();
             Token t = null;
-            string s = InputString.Substring(_start, _currentCharPosition - _start);
+            string s = inputString.Substring(_start, _currentCharPosition - _start);
             t = new Token(ETokenType.Identifier, s, _line, _char);
             _tks.Add(t);
         }
 
         private bool IsAlpha(char c) => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
-        private bool IsEnd() => _currentCharPosition >= InputString.Length;
+        private bool IsEnd() => _currentCharPosition >= inputString.Length;
         private bool IsAlphaNumeric(char c) => IsAlpha(c) || char.IsDigit(c);
     }
 }

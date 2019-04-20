@@ -11,7 +11,7 @@ namespace SleepingmatTest
     {
         static void Main(string[] args)
         {
-            Parser p = new Parser();
+            Sleepingmat.Sleepingmat p = new Sleepingmat.Sleepingmat();
             Exception ex = p.Parse(System.IO.File.ReadAllText("test.cfg"));
             if (ex != null)
                 throw ex;

@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("Sleepingmat")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("FEAR Labs")]
 [assembly: AssemblyProduct("Sleepingmat")]
-[assembly: AssemblyCopyright("Copyright ©  2019")]
+[assembly: AssemblyCopyright("Copyright ©  2019 FEAR Labs")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
