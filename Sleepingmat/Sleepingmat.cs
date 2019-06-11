@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Sleepingmat
 {
-    public class Sleepingmat
+    public class Mat
     {
         private Token[] tokens;
         private Lexer lex;
@@ -67,6 +67,33 @@ namespace Sleepingmat
         }
 
         /// <summary>
+        /// Checks if a key exists in the file.
+        /// </summary>
+        /// <param name="key">The key to check</param>
+        /// <returns></returns>
+        public bool ValueExists(string key)
+        {
+            return (settings.ContainsKey(key));
+        }
+
+        /// <summary>
+        /// Checks if a key exists in the first block with the specified name.
+        /// Returns false if the block does not exist.
+        /// </summary>
+        /// <param name="block">The name of the block to check.</param>
+        /// <param name="key">The key to check in the block.</param>
+        /// <returns></returns>
+        public bool ValueExists(string block, string key)
+        {
+            if(GetBlock(block, out Block b))
+            {
+                return b.ValueExists(key);
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Since an infinite number of blocks can have the same identifier, this returns all blocks with the same identifier. Use GetFirstBlock() if you only want one.
         /// </summary>
         /// <param name="name">Name of the blocks</param>
@@ -108,6 +135,18 @@ namespace Sleepingmat
             }
 
             block = null;
+            return false;
+        }
+
+        /// <summary>
+        /// Checks if a block exists. o(n) speeeeeeed.
+        /// </summary>
+        /// <param name="name">The name of the block.</param>
+        public bool BlockExists(string name)
+        {
+            foreach (Block b in blocks)
+                if (b.name == name)
+                    return true;
             return false;
         }
 

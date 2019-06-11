@@ -42,5 +42,15 @@ namespace Sleepingmat
             else
                 return string.Empty;
         }
+
+        /// <summary>
+        /// Checks if a key exists in this block.
+        /// </summary>
+        /// <param name="key">The key to check</param>
+        /// <returns></returns>
+        public bool ValueExists(string key)
+        {
+            return (settings.ContainsKey(key));
+        }
     }
 }
