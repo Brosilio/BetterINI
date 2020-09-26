@@ -12,5 +12,31 @@ If you want to deserialize an `IniFile` into an object, Call `IniSerializer.Dese
 
 Ensure that fields in the type are marked with the `[IniParam]` attribute.
 
+### Examples
+Assume the INI file contains this:
+```ini
+FName  = The
+LName  = Terminator
+Height = 6.2
+Weight = 249
+```
+
+Here is the C# type we want to use:
+```csharp
+public class Human
+{
+    [IniParam("FName")] public string firstName;
+    [IniParam("LName")] public string lastName;
+
+    [IniParam("Height")] public float height;
+    [IniParam("Weight")] public float weight;
+}
+```
+
+And here's how you deserialize the INI file we defined above:
+```csharp
+Human h = IniSerializer.Deserialze<Human>(iniData);
+```
+
 ## License
 MIT License.
