@@ -35,7 +35,7 @@ public class Human
 
 And here's how you deserialize the INI file we defined above:
 ```csharp
-Human h = IniSerializer.Deserialze<Human>(iniData);
+Human h = IniSerializer.Deserialize<Human>(iniData);
 ```
 
 ## License
