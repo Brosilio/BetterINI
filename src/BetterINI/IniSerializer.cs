@@ -6,17 +6,19 @@ using System.Threading.Tasks;
 
 namespace BetterINI
 {
+	/// <summary>
+	/// Provides access to INI file serialization functionality.
+	/// </summary>
 	public static class IniSerializer
 	{
 		/// <summary>
-		/// Deserialize the provided INI data into a type.
+		/// Deserialize the provided INI file into a type.
 		/// </summary>
 		/// <typeparam name="T">The type to deserialize data into.</typeparam>
-		/// <param name="data">The raw INI data.</param>
-		public static T Deserialize<T>(string data) where T : class, new()
+		/// <param name="ini">An input <see cref="IniFile"/> from which to suck data out of.</param>
+		public static T Deserialize<T>(IniFile ini) where T : class, new()
 		{
 			T template = new T();
-			IniFile ini = IniFile.Parse(data);
 
 			foreach (FieldInfo info in typeof(T).GetFields())
 			{
@@ -38,6 +40,36 @@ namespace BetterINI
 			}
 
 			return template;
+		}
+
+		/// <summary>
+		/// Deserialize the provided INI-file-style string into a type.
+		/// </summary>
+		/// <typeparam name="T">The type to deserialize data into.</typeparam>
+		/// <param name="data">The data.</param>
+		public static T Deserialize<T>(string data) where T : class, new()
+		{
+			return Deserialize<T>(IniFile.Parse(data));
+		}
+
+		/// <summary>
+		/// Deserialize the provided stream into a type. Will return when the stream reaches its end.
+		/// </summary>
+		/// <typeparam name="T">The type to deserialize the data into.</typeparam>
+		/// <param name="stream">A stream from which to read the INI data.</param>
+		public static T Deserialize<T>(Stream stream) where T : class, new()
+		{
+			return DeserializeAsync<T>(stream).GetAwaiter().GetResult();
+		}
+
+		/// <summary>
+		/// Deserialize the provided stream into a type. Will return when the stream reaches its end.
+		/// </summary>
+		/// <typeparam name="T">The type to deserialize the data into.</typeparam>
+		/// <param name="stream">A stream from which to read the INI data.</param>
+		public static async Task<T> DeserializeAsync<T>(Stream stream) where T : class, new()
+		{
+			return Deserialize<T>(await IniFile.ParseAsync(stream));
 		}
 	}
 }
