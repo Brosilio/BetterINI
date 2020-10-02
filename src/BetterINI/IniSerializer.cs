@@ -31,7 +31,7 @@ namespace BetterINI
 
 				if (!ini.KeyExists(name))
 				{
-					if (ipa.Required) throw new MissingIniParamException(name);
+					if (ipa.Required && !ini.IsSet(name)) throw new MissingIniParamException(name);
 
 					if (ipa.Default != null)
 						info.SetValue(template, ipa.Default);

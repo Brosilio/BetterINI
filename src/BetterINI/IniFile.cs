@@ -152,12 +152,30 @@ namespace BetterINI
 		/// </summary>
 		/// <param name="key">The name of the value.</param>
 		/// <exception cref="KeyNotFoundException" />
+		/// <exception cref="FormatException" />
+		/// <exception cref="OverflowException" />
+		/// <exception cref="ArgumentNullException" />
 		public int GetInt(string key)
 		{
 			if (!IsSet(key))
 				throw new KeyNotFoundException($"Key {key} not found in IniFile");
 
 			return int.Parse(this[key]);
+		}
+
+		/// <summary>
+		/// Get an integer value from the configuration data. Will return zero (0) or the specified default if the key does not exist.
+		/// </summary>
+		/// <param name="key">The name of the key.</param>
+		public int GetIntSafe(string key, int defaultValue = 0)
+		{
+			if (!IsSet(key))
+				return defaultValue;
+
+			if (int.TryParse(this[key], out int result))
+				return result;
+
+			return defaultValue;
 		}
 
 		/// <summary>
