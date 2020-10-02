@@ -251,7 +251,7 @@ namespace BetterINI
 			foreach (string key in data.Keys)
 			{
 				string k = align ? key.PadRight(longest) : key;
-				sb.AppendLine($"{key} = {data[key]}");
+				sb.AppendLine($"{k} = {data[key]}");
 			}
 
 			return sb.ToString();

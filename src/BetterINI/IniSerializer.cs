@@ -29,7 +29,7 @@ namespace BetterINI
 
 				string name = ipa.Name ?? info.Name;
 
-				if (!ini.IsSet(name))
+				if (!ini.KeyExists(name))
 				{
 					if (ipa.Required) throw new MissingIniParamException(name);
 
