@@ -9,6 +9,7 @@ namespace BetterINI
 	{
 		public string Name { get; }
 		public bool Required { get; set; }
+		public object Default { get; set; }
 
 		public IniParamAttribute() { }
 

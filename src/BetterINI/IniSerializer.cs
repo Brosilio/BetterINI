@@ -32,6 +32,10 @@ namespace BetterINI
 				if (!ini.IsSet(name))
 				{
 					if (ipa.Required) throw new MissingIniParamException(name);
+
+					if (ipa.Default != null)
+						info.SetValue(template, ipa.Default);
+
 					continue;
 				}
 
