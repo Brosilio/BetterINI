@@ -15,7 +15,19 @@ namespace BetterINI
 	public class IniFile
 	{
 		private readonly Dictionary<string, string> data;
-		public string this[string key] => KeyExists(key) ? data[key] : throw new KeyNotFoundException($"Key {key} not found in IniFile");
+		public string this[string key]
+		{
+			get
+			{
+				if (KeysCaseInsensitive)
+					key = key.ToLowerInvariant();
+
+				if (!KeyExists(key))
+					throw new KeyNotFoundException($"Key {key} not found in IniFile");
+
+				return this[key];
+			}
+		}
 
 		/// <summary>
 		/// The keys in the IniFile.
@@ -23,10 +35,25 @@ namespace BetterINI
 		public Dictionary<string, string>.KeyCollection Keys => data.Keys;
 
 		/// <summary>
+		/// Are the keys in this case-insensitive?
+		/// </summary>
+		public bool KeysCaseInsensitive { get; }
+
+		/// <summary>
+		/// The key / value separator character
+		/// </summary>
+		public char KeyValueSeparator { get; }
+
+		/// <summary>
 		/// Initialize a new, empty IniFile instance.
 		/// </summary>
-		public IniFile()
+		/// <param name="keysCaseInsensitive">Should key names be treated as case insensitive?</param>
+		/// <param name="keyValueSeparator">The key / value pair separator character.</param>
+		public IniFile(bool keysCaseInsensitive = false, char keyValueSeparator = '=')
 		{
+			KeysCaseInsensitive = keysCaseInsensitive;
+			KeyValueSeparator = KeyValueSeparator;
+
 			this.data = new Dictionary<string, string>();
 		}
 
@@ -35,19 +62,22 @@ namespace BetterINI
 		/// </summary>
 		/// <param name="fileName">The full path to the ini file.</param>
 		/// <returns>An ini file object.</returns>
-		public static IniFile ParseFromDisk(string fileName)
+		public static IniFile ParseFromDisk(string fileName, char keyValSep = '=', bool emptyIsUnset = false, bool keysCaseSensitive = false)
 		{
-			return Parse(File.ReadAllText(fileName));
+			return Parse(File.ReadAllText(fileName), keyValSep, emptyIsUnset, keysCaseSensitive);
 		}
 
 		/// <summary>
 		/// Parse INI key=value pairs from the provided string.
 		/// </summary>
 		/// <param name="data">The raw data.</param>
+		/// <param name="keyValSep">The key / value separator character.</param>
+		/// <param name="emptyIsUnset">Should empty values be treated as unset (and not added to the file)?</param>
+		/// <param name="keysCaseSensitive">Should key names be treated as case insensitive?</param>
 		/// <exception cref="ArgumentNullException" />
-		public static IniFile Parse(string data)
+		public static IniFile Parse(string data, char keyValSep = '=', bool emptyIsUnset = false, bool keysCaseSensitive = false)
 		{
-			IniFile f = new IniFile();
+			IniFile f = new IniFile(keysCaseSensitive, keyValSep);
 
 			StringReader sr = new StringReader(data);
 
@@ -56,8 +86,13 @@ namespace BetterINI
 				string line = sr.ReadLine();
 				if (line == null) break;
 
-				if (ParseLine(line, out string key, out string value))
+				if (ParseLine(line, keyValSep, out string key, out string value))
+				{
+					if (emptyIsUnset && value.Length == 0)
+						continue;
+
 					f.Add(key, value);
+				}
 			}
 
 			return f;
@@ -68,18 +103,23 @@ namespace BetterINI
 		/// </summary>
 		/// <param name="stream">A stream to read the INI data from.</param>
 		/// <returns></returns>
-		public static async Task<IniFile> ParseAsync(Stream stream)
+		public static async Task<IniFile> ParseAsync(Stream stream, char keyValSep = '=', bool emptyIsUnset = false, bool keysCaseSensitive = false)
 		{
 			StreamReader reader = new StreamReader(stream);
-			IniFile ini = new IniFile();
+			IniFile ini = new IniFile(keysCaseSensitive, keyValSep);
 
 			while (true)
 			{
 				string line = await reader.ReadLineAsync();
 				if (line == null) break;
 
-				if (ParseLine(line, out string key, out string value))
+				if (ParseLine(line, keyValSep, out string key, out string value))
+				{
+					if (emptyIsUnset && value.Length == 0)
+						continue;
+
 					ini.Add(key, value);
+				}
 			}
 
 			return ini;
@@ -89,9 +129,9 @@ namespace BetterINI
 		/// Parse an INI file out of a stream. Will return when the end of stream is reached. The stream will not be disposed.
 		/// </summary>
 		/// <param name="stream">A stream to read the INI data from.</param>
-		public static IniFile Parse(Stream stream)
+		public static IniFile Parse(Stream stream, char keyValSep = '=', bool emptyIsUnset = false, bool keysCaseSensitive = false)
 		{
-			return ParseAsync(stream).GetAwaiter().GetResult();
+			return ParseAsync(stream, keyValSep, emptyIsUnset, keysCaseSensitive).GetAwaiter().GetResult();
 		}
 
 		/// <summary>
@@ -124,7 +164,7 @@ namespace BetterINI
 		/// <param name="outKey">The parsed key name.</param>
 		/// <param name="outValue">The parsed value.</param>
 		/// <returns><see langword="true"/> if the line was valid, <see langword="false"/> if it was not.</returns>
-		private static bool ParseLine(string line, out string outKey, out string outValue)
+		private static bool ParseLine(string line, char keyValSep, out string outKey, out string outValue)
 		{
 			outKey = null;
 			outValue = null;
@@ -133,11 +173,12 @@ namespace BetterINI
 				return false;
 
 			line = line.Trim();
-			if (line.StartsWith("#") || !line.Contains('=') || line.StartsWith("="))
+			if (line.StartsWith("#") || !line.Contains(keyValSep) || line.StartsWith(keyValSep.ToString()))
 				return false;
 
-			outKey = line.Substring(0, line.IndexOf('=')).Trim();
-			outValue = line.IndexOf('=') + 1 >= line.Length ? string.Empty : line.Substring(line.IndexOf('=') + 1).Trim();
+			outKey = line.Substring(0, line.IndexOf(keyValSep)).Trim();
+			outValue = line.IndexOf(keyValSep) + 1 >= line.Length ? string.Empty : line.Substring(line.IndexOf(keyValSep) + 1).Trim();
+
 			return true;
 		}
 
@@ -157,7 +198,7 @@ namespace BetterINI
 		/// </summary>
 		/// <param name="key">The name of the key.</param>
 		/// <param name="split">The character to split the value by.</param>
-		public string[] GetArraySafe(string key, char split)
+		public string[] SafeGetArray(string key, char split)
 		{
 			if (!IsSet(key))
 				return Array.Empty<string>();
@@ -170,8 +211,12 @@ namespace BetterINI
 		/// </summary>
 		/// <param name="key">The name of the key. This is case-sensitive.</param>
 		/// <param name="value">The value.</param>
+		/// <exception cref="ArgumentNullException" />
 		public void Add(string key, string value)
 		{
+			if (KeysCaseInsensitive)
+				key = key.ToLowerInvariant();
+
 			if (data.ContainsKey(key))
 				data[key] = value;
 			else
@@ -179,11 +224,22 @@ namespace BetterINI
 		}
 
 		/// <summary>
+		/// Gets a value from this IniFile by name <paramref name="key"/>.
+		/// </summary>
+		/// <param name="key">The name of the key.</param>
+		/// <returns>The value found.</returns>
+		/// <exception cref="KeyNotFoundException" />
+		public string Get(string key)
+		{
+			return this[key];
+		}
+
+		/// <summary>
 		/// Attempt to add or overwrite a key/value pair in the IniFile. Will not throw if key or value is null.
 		/// </summary>
 		/// <param name="key">The name of the key.</param>
 		/// <param name="value">The value.</param>
-		public void AddSafe(string key, string value)
+		public void SafeAdd(string key, string value)
 		{
 			if (key == null || value == null)
 				return;
@@ -211,7 +267,7 @@ namespace BetterINI
 		/// Get an integer value from the configuration data. Will return zero (0) or the specified default if the key does not exist.
 		/// </summary>
 		/// <param name="key">The name of the key.</param>
-		public int GetIntSafe(string key, int defaultValue = 0)
+		public int SafeGetInt(string key, int defaultValue = 0)
 		{
 			if (!IsSet(key))
 				return defaultValue;
@@ -223,19 +279,20 @@ namespace BetterINI
 		}
 
 		/// <summary>
-		/// Try to get a value. Returns null if not found.
+		/// Try to get a value. Returns null or <paramref name="defaultValue"/> if the key is not found.
 		/// </summary>
 		/// <param name="key">The key.</param>
-		public string SafeGet(string key)
+		/// <param name="defaultValue">A default fallback value to use in case the specified key does not exist.</param>
+		public string SafeGet(string key, string defaultValue = null)
 		{
 			if (IsSet(key))
 				return this[key];
 
-			return null;
+			return defaultValue;
 		}
 
 		/// <summary>
-		/// Parse an Enum from the configuration data. Will return null on failure.
+		/// Parse an Enum from the configuration data. The param <paramref name="result"/> will be null on failure.
 		/// </summary>
 		/// <param name="enumType">The type of the enum to parse.</param>
 		/// <param name="key">The name of the value in the configuration file.</param>
@@ -254,6 +311,25 @@ namespace BetterINI
 			return false;
 		}
 
+		/// <summary>
+		/// Parse an Enum of type <typeparamref name="TEnum"/> from the configuration data. If no <paramref name="defaultValue"/> is provided
+		/// and the enum value could not be parsed, this method will throw <see cref="ArgumentException"/>.
+		/// </summary>
+		/// <typeparam name="TEnum">The type of the enum to parse.</typeparam>
+		/// <param name="key">The name of the value in the configuration file.</param>
+		/// <param name="defaultValue">Some default enum value, if any. Will return this on parse failure if set, or throw an exception otherwise.</param>
+		/// <returns>The parsed enum value, or <paramref name="defaultValue"/> if it is provided.</returns>
+		/// <exception cref="ArgumentException" />
+		public TEnum GetEnum<TEnum>(string key, TEnum? defaultValue = null) where TEnum : struct
+		{
+			if (TryGetEnum<TEnum>(key, out TEnum? result))
+				return result.Value;
+
+			if (defaultValue == null && result == null)
+				throw new ArgumentException("Could not parse the value of provided key as provided enum type.");
+
+			return defaultValue.Value;
+		}
 
 		/// <summary>
 		/// Get a boolean value. Returns <paramref name="defaultValue"/> if the key is not found.
@@ -261,7 +337,7 @@ namespace BetterINI
 		/// <param name="key">The key.</param>
 		/// <param name="defaultValue">The default value to return if the key is not found.</param>
 		/// <returns></returns>
-		public bool GetBoolSafe(string key, bool defaultValue = false)
+		public bool SafeGetBool(string key, bool defaultValue = false)
 		{
 			if (!IsSet(key))
 				return defaultValue;
@@ -296,11 +372,18 @@ namespace BetterINI
 			return true;
 		}
 
+		/// <summary>
+		/// Returns this IniFile as a string.
+		/// </summary>
 		public override string ToString()
 		{
 			return ToString(false);
 		}
 
+		/// <summary>
+		/// Returns this IniFile as a string.
+		/// </summary>
+		/// <param name="align">Align the value separators to the longest key length, for visual goodness.</param>
 		public string ToString(bool align = false)
 		{
 			StringBuilder sb = new StringBuilder();
@@ -313,7 +396,7 @@ namespace BetterINI
 			foreach (string key in data.Keys)
 			{
 				string k = align ? key.PadRight(longest) : key;
-				sb.AppendLine($"{k} = {data[key]}");
+				sb.AppendLine($"{k} {KeyValueSeparator} {data[key]}");
 			}
 
 			return sb.ToString();
