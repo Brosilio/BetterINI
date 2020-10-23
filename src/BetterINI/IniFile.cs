@@ -58,7 +58,7 @@ namespace BetterINI
 		public IniFile(bool keysCaseInsensitive = false, char keyValueSeparator = '=')
 		{
 			KeysCaseInsensitive = keysCaseInsensitive;
-			KeyValueSeparator = KeyValueSeparator;
+			KeyValueSeparator = keyValueSeparator;
 
 			this.data = new Dictionary<string, string>();
 		}
