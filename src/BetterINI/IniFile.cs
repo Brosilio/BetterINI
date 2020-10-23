@@ -31,7 +31,7 @@ namespace BetterINI
 				if (!KeyExists(key))
 					throw new KeyNotFoundException($"Key {key} not found in IniFile");
 
-				return this[key];
+				return data[key];
 			}
 		}
 
@@ -409,7 +409,7 @@ namespace BetterINI
 		}
 
 		/// <summary>
-		/// Returns <see langword="true"/> if the specified key exists. This is case-sensitive.
+		/// Returns <see langword="true"/> if the specified key exists.
 		/// </summary>
 		/// <param name="key">The name of the key. This is case-sensitive.</param>
 		/// <returns>Returns true if the key exists.</returns>
