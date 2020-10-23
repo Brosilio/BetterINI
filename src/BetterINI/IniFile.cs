@@ -10,14 +10,22 @@ namespace BetterINI
 	/// <summary>
 	/// Represents a Key=Value style configuration file in memory.
 	/// <para />
-	/// Use <see cref="Parse"/> or similar to obtain one.
+	/// See <see cref="Parse"/>.
 	/// </summary>
 	public class IniFile
 	{
 		private readonly Dictionary<string, string> data;
 		public string this[string key] => KeyExists(key) ? data[key] : throw new KeyNotFoundException($"Key {key} not found in IniFile");
 
-		private IniFile()
+		/// <summary>
+		/// The keys in the IniFile.
+		/// </summary>
+		public Dictionary<string, string>.KeyCollection Keys => data.Keys;
+
+		/// <summary>
+		/// Initialize a new, empty IniFile instance.
+		/// </summary>
+		public IniFile()
 		{
 			this.data = new Dictionary<string, string>();
 		}
@@ -87,6 +95,29 @@ namespace BetterINI
 		}
 
 		/// <summary>
+		/// Combine a set of IniFiles into one. Keys with null values are overwritten with non-null values from other files if possible.
+		/// If multiple keys with the same name exist, then the first found value will be used.
+		/// </summary>
+		/// <param name="files">A list of files to combine.</param>
+		public static IniFile Combine(params IniFile[] files)
+		{
+			IniFile result = new IniFile();
+
+			foreach (IniFile ini in files)
+			{
+				foreach (string key in ini.Keys)
+				{
+					if (!result.IsSet(key) && ini.IsSet(key))
+					{
+						result.Add(key, ini[key]);
+					}
+				}
+			}
+
+			return result;
+		}
+
+		/// <summary>
 		/// Parse a single line of INI garbage into a key=value pair.
 		/// </summary>
 		/// <param name="line">The source line.</param>
@@ -139,12 +170,25 @@ namespace BetterINI
 		/// </summary>
 		/// <param name="key">The name of the key. This is case-sensitive.</param>
 		/// <param name="value">The value.</param>
-		private void Add(string key, string value)
+		public void Add(string key, string value)
 		{
 			if (data.ContainsKey(key))
 				data[key] = value;
 			else
 				data.Add(key, value);
+		}
+
+		/// <summary>
+		/// Attempt to add or overwrite a key/value pair in the IniFile. Will not throw if key or value is null.
+		/// </summary>
+		/// <param name="key">The name of the key.</param>
+		/// <param name="value">The value.</param>
+		public void AddSafe(string key, string value)
+		{
+			if (key == null || value == null)
+				return;
+
+			Add(key, value);
 		}
 
 		/// <summary>

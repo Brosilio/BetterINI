@@ -22,10 +22,11 @@ namespace BetterINI
 
 			foreach (FieldInfo info in typeof(T).GetFields())
 			{
+				IniIgnoreAttribute ignore = info.GetCustomAttribute<IniIgnoreAttribute>();
+				if (ignore != null) continue;
+
 				IniParamAttribute ipa = info.GetCustomAttribute<IniParamAttribute>();
-				
-				if (ipa == null)
-					continue;
+				if (ipa == null) continue;
 
 				string name = ipa.Name ?? info.Name;
 
@@ -74,6 +75,47 @@ namespace BetterINI
 		public static async Task<T> DeserializeAsync<T>(Stream stream) where T : class, new()
 		{
 			return Deserialize<T>(await IniFile.ParseAsync(stream));
+		}
+
+		/// <summary>
+		/// Serialize an object with public fields into an IniFile. Use <see cref="IniIgnoreAttribute"/> to ignore specific fields.
+		/// </summary>
+		/// <typeparam name="T">The type of the object to serialize.</typeparam>
+		/// <param name="obj">The instance of the object to serialize.</param>
+		/// <returns>An IniFile containing the serialized data.</returns>
+		public static IniFile Serialize<T>(T obj) where T : class
+		{
+			if (obj == null) throw new ArgumentNullException(nameof(obj));
+
+			IniFile ini = new IniFile();
+
+			foreach (FieldInfo info in typeof(T).GetFields())
+			{
+				IniIgnoreAttribute ignore = info.GetCustomAttribute<IniIgnoreAttribute>();
+				if (ignore != null) continue;
+
+				IniParamAttribute ipa = info.GetCustomAttribute<IniParamAttribute>();
+
+				string name = info.Name;
+				bool required = false;
+				string fallback = "";
+
+				if (ipa != null)
+				{
+					required = ipa.Required;
+					if (ipa.Name != null) name = ipa.Name;
+					if (ipa.Default != null) fallback = ipa.Default.ToString();
+				}
+
+				object val = info.IsStatic ? info.GetValue(null) : info.GetValue(obj);
+
+				if (val != null)
+					ini.Add(name, val.ToString());
+				else if (val == null && required)
+					ini.Add(name, fallback);
+			}
+
+			return ini;
 		}
 	}
 }
