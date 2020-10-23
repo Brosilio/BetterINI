@@ -15,6 +15,12 @@ namespace BetterINI
 	public class IniFile
 	{
 		private readonly Dictionary<string, string> data;
+
+		/// <summary>
+		/// Get a value from this IniFile.
+		/// </summary>
+		/// <param name="key">The name of the key.</param>
+		/// <exception cref="KeyNotFoundException" />
 		public string this[string key]
 		{
 			get
